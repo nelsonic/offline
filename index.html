@@ -2,29 +2,49 @@
   <head>
     <meta charset="utf-8">
     <title>Posts</title>
+
     <script src="/angular.js"></script>
-    <script>
-      var app = angular.module('posts', []);
+    <script src="/ng-app.js"></script>
 
-      app.controller('PostsCtrl', function ($scope, $http){
-        $http.get('posts.json').success(function(data) {
-          $scope.posts = data;
-        });
-      });
-
-
-    </script>
+    <link href="/style.css" type="text/css" rel="stylesheet" >
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" type="text/css" rel="stylesheet">
   </head>
-  <body ng-controller="PostsCtrl">
-    <table>
-      <tr>
-        <th>Country</th>
-        <th>Population</th>
-      </tr>
-      <tr ng-repeat="post in posts">
-        <td>{{post.authorName}}</td>
-        <td>{{post.body}}</td>
-      </tr>
-    </table>
+
+  <body ng-controller="Ctrl">
+
+    <img id="front-cover" src=""> <!-- front page of PDF -->
+
+    <div ng-repeat="post in posts" class="post" style="page-break-inside:avoid; page-break-after:auto;">
+      <img ng-src ="{{getImage(post)}}" class='post-img'>
+      <br />
+      <table>
+        <tr>
+          <td class='avatar-cell'> <img class='avatar' ng-src="{{getAvatar(post.user_id)}}"> </td>
+          <td class='authorname'> {{post.authorName}} </td>
+          <td class='username'> {{authorUsername(post)}} </td>
+          <td class='postdate'> {{post.date}} </td>
+        </tr>
+      </table>
+
+      <p ng-html="post.body">{{post.body}}</p>
+
+      <div class="comments" ng-if="post.comments.length > 0">
+        <h3><img src="img/comments-icon.png" style="width:40px; padding-top:10px;"> Comments</h3>
+        <div ng-repeat="c in post.comments">
+          <table>
+            <tr>
+              <td class='avatar-cell'> <img class='avatar' ng-src="{{getAvatar(c.userId)}}"> </td>
+              <td class='authorname'> {{c.authorName}} </td>
+              <td class='username'> {{authorUsername(c)}} </td>
+              <td class='postdate'> {{formatDate(c.created_at)}} </td>
+            </tr>
+          </table>
+          <p>{{c.body}}</p>
+        </div>
+      </div> <!-- end .comment -->
+
+
+    </div> <!-- end .post -->
+
   </body>
 </html>
