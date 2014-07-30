@@ -1,64 +1,44 @@
 var phantom = require('phantom');
-var users = require('./users.json');
-console.log(users.length);
 
-// child_process.js:947
-//     throw errnoException(process._errno, 'spawn');
-//           ^
-// Error: spawn EMFILE
+var posts = require('./posts.json');
+console.log("Posts:",posts.length);
 
-var max_concurrent = 100;
-var total = users.length;
-var done  = 0;
-var running = 0;
-var waiting = [];
-users.map(function(user){
-  user.email = user.emails[0].address;
-  waiting.push(user);
-
-
-
+var postUsers = [];
+posts.map(function(p){
+  postUsers.push(p.user_id);
 });
+console.log("postUsers:",postUsers.length);
 
-// loop through all items start processing
-while(done <= total){
+var users = require('./users.json');
+console.log("Users:",users.length);
 
-  if(running < max_concurrent){
-    running++;
-    console.log("Done: "+done+" | Waiting:"+waiting.length +" | Running:"+running);
-    run();
+var interval = setInterval( function() {
+  var u = nextUser();
+  if(typeof u !== 'undefined' && typeof u._id !== 'undefined') {
+    console.log(u._id +' | '+users.length);
+    u.email = u.emails[0].address;
+    savePDF(u);
   }
-}
 
-function run(){
-    var u = waiting.pop();
-    savePDF(u, function cb(){
-      done++;
-      running--;
-    });
-}
+  if(users.length === 0) {
+    clearInterval(interval);
+  }
+}, 1000);
 
-
-function wait(){
-  setTimeout(function(){
-    if(running.length < max_concurrent){
-      next();
-    } else {
-      wait();
+function nextUser(){
+  var hasPosts = false;
+  while(hasPosts === false){
+    var u = users.pop();
+    if(postUsers.indexOf(u._id) > -1){
+      // console.log('hai');
+      hasPosts = true;
     }
-  },100);
-}
-
-function next(){
-  // running.push(user.)
-  user.email = user.emails[0].address;
-  if(user.email.indexOf('themanor') > -1 || user.email.indexOf('hony') > -1 ){
-    savePDF(user);
   }
+  return u;
 }
 
 
-function savePDF(user, callback){
+function savePDF(user){
   var u = user;
 
   phantom.create(function (ph) {
@@ -68,15 +48,14 @@ function savePDF(user, callback){
 
         page.set('paperSize', { format: 'A4', border: '1cm' });
         // page.set('paperSize', { width: 1024, height: 768} );
-
+        var filename = __dirname+'/pdf/Tilr_posts_'+u.email+'.pdf'
         page.evaluate(function () { return document.title; }, function (title) {
           console.log('Page title is ' + title);
-          page.render(__dirname+'/pdf/Tilr_posts_'+u.email+'.pdf', function() {
+          page.render(filename, function() {
+            console.log(filename + ' - - - SAVED - - -')
             // file is now written to disk
-            callback();
+            ph.exit();
           });
-
-          ph.exit();
         });
       });
     });
